@@ -1,0 +1,21 @@
+{
+  "name": "complete-todo-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node src/index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "node": "^20.19.4",
+    "nodemon": "^3.1.10",
+    "url": "^0.11.4",
+    "zod": "^4.0.14"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

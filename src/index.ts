@@ -1,10 +1,20 @@
 import express from "express";
 import mongoose from 'mongoose'
+import morgan from "morgan";
+import helmet from "helmet";
+import cors from "cors";
+import dotenv from "dotenv";
+
 const server = express();
+dotenv.config();
 
-mongoose.connect("mongodb://127.0.0.1:27017/complete-todo-app").then(() => console.log("DB Connected")).catch((err) => console.log(`Error in Connection ${err}`));
+mongoose.connect(process.env.MONGO_URI!).then(() => console.log("DB Connected")).catch((err) => console.log(`Error in Connection ${err}`));
 
-server.use(express.json());// Pre biuld Middle ware
+// Pre biuld Middle ware
+server.use(express.json());
+server.use(morgan("dev"));
+server.use(helmet());
+server.use(cors());
 
 type todo = {
     task: string
@@ -36,6 +46,14 @@ server.route("/")
         const result = await myModel.find({});
         res.status(200).json({ result });
     })
+
+server.route("/page/:numm")
+    .get(async (req, res) => {
+        const numm = Number(req.params.numm);
+        const jump = (numm - 1) * 5;
+        const result = await myModel.find({}).skip(jump).limit(5);
+        res.status(200).json({ result });
+    });
 
 server.route("/:id")
     .get(async (req, res) => {

@@ -12,12 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// This code is part of a Node.js application that uses Express and Mongoose to manage a simple todo list.
+// It includes routes for creating, reading, updating, and deleting todo tasks, with pagination support
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const morgan_1 = __importDefault(require("morgan"));
 const helmet_1 = __importDefault(require("helmet"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const joi_1 = __importDefault(require("joi"));
 const server = (0, express_1.default)();
 dotenv_1.default.config();
 mongoose_1.default.connect(process.env.MONGO_URI).then(() => console.log("DB Connected")).catch((err) => console.log(`Error in Connection ${err}`));
@@ -26,6 +29,9 @@ server.use(express_1.default.json());
 server.use((0, morgan_1.default)("dev"));
 server.use((0, helmet_1.default)());
 server.use((0, cors_1.default)());
+const joiSchema = joi_1.default.object({
+    task: joi_1.default.string().strict().required()
+});
 const todoSchema = new mongoose_1.default.Schema({
     task: {
         type: String,
@@ -40,6 +46,14 @@ server.listen(port, () => {
 server.route("/")
     .post((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    try {
+        yield joiSchema.validateAsync(req.body);
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        res.status(400).send(`Invalid input: ${message}`);
+        return;
+    }
     const body = (_a = req.body) === null || _a === void 0 ? void 0 : _a.task;
     yield myModel.create({
         task: body

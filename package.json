@@ -2,11 +2,11 @@
   "name": "complete-todo-app",
   "version": "1.0.0",
   "main": "index.js",
-"scripts": {
-  "dev": "nodemon src/index.ts",
-  "build": "tsc",
-  "start": "node dist/index.js"
-},
+  "scripts": {
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
   "author": "",
   "license": "ISC",
   "description": "",
@@ -15,6 +15,7 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
+    "joi": "^18.0.0",
     "mongoose": "^8.16.5",
     "morgan": "^1.10.1",
     "node": "^20.19.4",

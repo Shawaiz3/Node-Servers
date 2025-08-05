@@ -29,7 +29,9 @@ const todoSchema = new mongoose.Schema<todo>({
 
 const myModel = mongoose.model<todo>("myTask", todoSchema);
 
-server.listen(3000, () => {
+const port = process.env.PORT || 3000;
+
+server.listen(port, () => {
     console.log("Server started at port 3000");
 })
 

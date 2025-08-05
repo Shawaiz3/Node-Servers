@@ -1,9 +1,12 @@
+// This code is part of a Node.js application that uses Express and Mongoose to manage a simple todo list.
+// It includes routes for creating, reading, updating, and deleting todo tasks, with pagination support
 import express from "express";
 import mongoose from 'mongoose'
 import morgan from "morgan";
 import helmet from "helmet";
 import cors from "cors";
 import dotenv from "dotenv";
+import joi from "joi";
 
 const server = express();
 dotenv.config();
@@ -19,6 +22,10 @@ server.use(cors());
 type todo = {
     task: string
 }
+
+const joiSchema = joi.object({
+    task: joi.string().strict().required()
+})
 
 const todoSchema = new mongoose.Schema<todo>({
     task: {
@@ -37,6 +44,14 @@ server.listen(port, () => {
 
 server.route("/")
     .post(async (req, res) => {
+        try{
+        await joiSchema.validateAsync(req.body);
+        } 
+        catch(err){
+            const message = err instanceof Error ? err.message : String(err)
+            res.status(400).send(`Invalid input: ${message}`);
+            return;
+        }
         const body = req.body?.task;
         await myModel.create({
             task: body

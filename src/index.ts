@@ -1,5 +1,4 @@
 // This code is part of a Node.js application that uses Express and Mongoose to manage a simple todo list.
-// It includes routes for creating, reading, updating, and deleting todo tasks, with pagination support
 import express from "express";
 import mongoose from 'mongoose'
 import morgan from "morgan";
@@ -7,6 +6,7 @@ import helmet from "helmet";
 import cors from "cors";
 import dotenv from "dotenv";
 import joi from "joi";
+import { logger } from "./logger"
 
 const server = express();
 dotenv.config();
@@ -44,11 +44,12 @@ server.listen(port, () => {
 
 server.route("/")
     .post(async (req, res) => {
-        try{
-        await joiSchema.validateAsync(req.body);
-        } 
-        catch(err){
-            const message = err instanceof Error ? err.message : String(err)
+        try {
+            await joiSchema.validateAsync(req.body);
+        }
+        catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`Error during adding ${message}`);
             res.status(400).send(`Invalid input: ${message}`);
             return;
         }
@@ -56,19 +57,15 @@ server.route("/")
         await myModel.create({
             task: body
         })
+        logger.info('Sucessfully added data');
         res.status(201).send(`Sucessfully Added task: ${body}`);
     })
-
     .get(async (req, res) => {
-        const result = await myModel.find({});
-        res.status(200).json({ result });
-    })
-
-server.route("/page/:numm")
-    .get(async (req, res) => {
-        const numm = Number(req.params.numm);
-        const jump = (numm - 1) * 5;
-        const result = await myModel.find({}).skip(jump).limit(5);
+        const page = Number(req.query.page);
+        const limit = Number(req.query.limit);
+        const jump = (page - 1) * limit;
+        const result = await myModel.find({}).skip(jump).limit(limit);
+        logger.info(`Data sent`)
         res.status(200).json({ result });
     });
 
@@ -76,16 +73,19 @@ server.route("/:id")
     .get(async (req, res) => {
         const id = req.params.id;
         const selectedUser = await myModel.findById(id);
+        logger.info(`Data of id ${id} is sent`);
         res.status(200).json({ selectedUser });
     })
     .patch(async (req, res) => {
         const id = req.params.id;
         const body: todo = req.body?.task;
         await myModel.findByIdAndUpdate(id, { task: body });
+        logger.info(`Data of id ${id} is updated`);
         res.status(200).send(`Updated Record at id: ${id}`);
     })
     .delete(async (req, res) => {
         const id = req.params.id;
         await myModel.findByIdAndDelete(id);
+        logger.info(`Data of id ${id} is deleted`);
         res.status(200).send(`Deleted Record at id: ${id}`)
     })

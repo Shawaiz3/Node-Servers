@@ -63,11 +63,24 @@ server.route("/")
     .get(async (req, res) => {
         const page = Number(req.query.page);
         const limit = Number(req.query.limit);
+        const search = req.query.task;
         const jump = (page - 1) * limit;
-        const result = await myModel.find({}).skip(jump).limit(limit);
-        logger.info(`Data sent`)
-        res.status(200).json({ result });
+        const filter: any = {};
+        if (search) {
+            filter.task = search;
+        }
+        const result = await myModel.find(filter).skip(jump).limit(limit);
+        console.log(`Result  = ${result}`)
+        if (result.length === 0) {
+            logger.error(`No data Found`)
+            res.status(200).send('No data Found');
+        }
+        else {
+            logger.info(`Data sent`)
+            res.status(200).json({ result });
+        }
     });
+
 
 server.route("/:id")
     .get(async (req, res) => {

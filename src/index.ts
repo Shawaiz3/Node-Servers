@@ -63,16 +63,20 @@ server.route("/")
     .get(async (req, res) => {
         const page = Number(req.query.page);
         const limit = Number(req.query.limit);
-        const search = req.query.task;
+        const search = String(req.query.task);
         const jump = (page - 1) * limit;
-        const filter: any = {};
-        if (search) {
+        const filter: Partial<todo> = {};
+        if (page === 0 || limit === 0) {
+            logger.error(`page and limit can't be null or zero in pagination`);
+            res.status(400).send(`page and limit can't be null or zero`);
+            return;
+        }
+        if (search != "undefined") {
             filter.task = search;
         }
         const result = await myModel.find(filter).skip(jump).limit(limit);
-        console.log(`Result  = ${result}`)
         if (result.length === 0) {
-            logger.error(`No data Found`)
+            logger.info(`No data Found`)
             res.status(200).send('No data Found');
         }
         else {
@@ -83,22 +87,58 @@ server.route("/")
 
 
 server.route("/:id")
+    .all((req, res, next) => {
+        const id = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            logger.error(`Invalid ID in request`);
+            res.status(400).send("Invalid ID");
+            return;
+        }
+        next();
+    })
     .get(async (req, res) => {
         const id = req.params.id;
         const selectedUser = await myModel.findById(id);
-        logger.info(`Data of id ${id} is sent`);
-        res.status(200).json({ selectedUser });
+        if (selectedUser) {
+            logger.info(`Data of id ${id} is sent`);
+            res.status(200).json({ selectedUser });
+        }
+        else {
+            logger.info(`No Data Found`);
+            res.status(404).send(`No Data Found`);
+        }
     })
     .patch(async (req, res) => {
         const id = req.params.id;
-        const body: todo = req.body?.task;
-        await myModel.findByIdAndUpdate(id, { task: body });
-        logger.info(`Data of id ${id} is updated`);
-        res.status(200).send(`Updated Record at id: ${id}`);
+        try {
+            await joiSchema.validateAsync(req.body);
+        }
+        catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`Error during Updating ${message}`);
+            res.status(400).send(`Invalid input: ${message}`);
+            return;
+        }
+        const body = req.body?.task;
+        const selectedUser = await myModel.findByIdAndUpdate(id, { task: body });
+        if (selectedUser) {
+            logger.info(`Data of id ${id} is updated`);
+            res.status(200).send(`Updated Record at id: ${id}`);
+        }
+        else {
+            logger.info(`No Data Found`);
+            res.status(404).send(`No Data Found`);
+        }
     })
     .delete(async (req, res) => {
         const id = req.params.id;
-        await myModel.findByIdAndDelete(id);
-        logger.info(`Data of id ${id} is deleted`);
-        res.status(200).send(`Deleted Record at id: ${id}`)
+        const selectedUser = await myModel.findByIdAndDelete(id);
+        if (selectedUser) {
+            logger.info(`Data of id ${id} is deleted`);
+            res.status(200).send(`Deleted Record at id: ${id}`)
+        }
+        else {
+            logger.info(`No Data Found`);
+            res.status(404).send(`No Data Found`);
+        }
     })

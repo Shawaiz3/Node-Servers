@@ -19,7 +19,7 @@ server.use(helmet());
 server.use(cors());
 
 type todo = {
-    task: string
+    task: string 
 }
 
 declare global {
@@ -104,9 +104,9 @@ server.route("/")
         const limit = Number(req.query.limit);
         const search = String(req.query.task);
         const jump = (page - 1) * limit;
-        const filter: Partial<todo> = {};
-        if (search != "undefined") {
-            filter.task = search;
+        const filter: any = {};
+        if (typeof search === "string" && search.trim() !== "") {
+            filter.task = { $regex: req.query.task, $options: "i" };
         }
         const result = await myModel.find(filter).skip(jump).limit(limit);
         if (result.length === 0) {

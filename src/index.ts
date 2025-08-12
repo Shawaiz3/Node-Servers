@@ -7,6 +7,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import joi from "joi";
 import { logger } from "./logger"
+import auth from "./middleWare/auth"
+import userRoutes from "./userRoutes"
 
 const server = express();
 dotenv.config();
@@ -89,6 +91,9 @@ const port = process.env.PORT || 3000;
 server.listen(port, () => {
     console.log("Server started at port 3000");
 })
+
+server.use('/users', userRoutes); // using all user's routes
+server.use(auth); // adding Middleware
 
 server.route("/")
     .post(validateBody, async (req, res) => {

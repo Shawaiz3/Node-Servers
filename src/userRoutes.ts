@@ -3,9 +3,15 @@ import dotenv from "dotenv";
 import user from "./userModel";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import Redis from "ioredis";
 
 const server = express();
 dotenv.config();
+
+// Connect to Redis
+export const redis = new Redis();
+redis.on("connect", () => console.log("Connected to Redis"));
+redis.on("error", (err) => console.error("Redis error:", err));
 
 server.post('/register', async (req, res) => {
     const { username, email, password } = req.body; // object construction method
@@ -36,10 +42,26 @@ server.post('/login', async (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: '5m' }
     )
-    res.json({token});
+    await redis.set(`token:${selectedUser._id}`, token, "EX", 300); //Set the Token that expires in 5 min
+    res.json({ token });
 })
-// server.post('/logout', async (req, res) => {
+server.post('/logout', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).send("No token provided");
 
-// })
+    const token = authHeader.split(" ")[1];
+    let decoded: any;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    } catch (err) {
+        return res.status(400).send("Invalid token");
+    }
+
+    // Remove from active tokens and add to blacklist
+    await redis.del(`token:${decoded.userId}`);
+    await redis.set(`blacklist:${token}`, "true", "EX", 300);
+
+    res.json({ message: "Logged out successfully" });
+})
 
 export default server;

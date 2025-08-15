@@ -4,7 +4,7 @@ import user from "./userModel";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import Redis from "ioredis";
-
+import Joi from "joi";
 const server = express();
 dotenv.config();
 
@@ -13,7 +13,34 @@ export const redis = new Redis();
 redis.on("connect", () => console.log("Connected to Redis"));
 redis.on("error", (err) => console.error("Redis error:", err));
 
-server.post('/register', async (req, res) => {
+// Join validation
+
+import { Request, Response, NextFunction } from "express";
+
+// Define validation schema
+const registerSchema = Joi.object({
+  username: Joi.string()
+    .min(3)
+    .max(30)
+    .required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+});
+
+// Middleware to validate request body
+function validateRegister(req: Request, res: Response, next: NextFunction) {
+  const { error } = registerSchema.validate(req.body, { abortEarly: false });
+
+  if (error) {
+    return res.status(400).json({
+      message: "Validation Error",
+      details: error.details.map((err) => err.message),
+    });
+  }
+
+  next();
+}
+server.post('/register',validateRegister, async (req, res) => {
     const { username, email, password } = req.body; // object construction method
     const existingUser = await user.findOne({ $or: [{ username }, { email }] }); // Using or method of mongo DB
     if (existingUser) {
@@ -26,7 +53,7 @@ server.post('/register', async (req, res) => {
 })
 server.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const selectedUser: any = await user.findOne({ username }); // recheck
+    const selectedUser = await user.findOne({ username });
     if (!selectedUser) {
         return res.status(404).send("User not Found!");
     }

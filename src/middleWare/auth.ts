@@ -2,7 +2,13 @@ import jwt from "jsonwebtoken"
 import { Request, Response } from "express";
 import { NextFunction } from "connect";
 import { redis } from "../userRoutes"; // Import same Redis connection
+import { JwtPayload } from "jsonwebtoken";
 
+declare module "express-serve-static-core" {
+    interface Request {
+        token?: string | JwtPayload;
+    }
+}
 const auth = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const bearerHeader = req.headers['authorization'];
@@ -16,7 +22,7 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
             }
 
             const user = jwt.verify(token, process.env.JWT_SECRET!);
-            (req as any).token = user;  // Recheck
+            req.token = user;
             next();
 
         } else {

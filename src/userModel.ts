@@ -1,5 +1,10 @@
 import mongoose from 'mongoose'
-const userSchema = new mongoose.Schema({
+export type UserType = Document & {
+    username: string;
+    email: string;
+    password: string;
+};
+const userSchema = new mongoose.Schema<UserType>({
     username: {
         type: String,
         require: true
@@ -12,11 +17,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         require: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
-})
-const User = mongoose.model('User', userSchema);
+}, { timestamps: true });
+const User = mongoose.model<UserType>('User', userSchema);
 export default User;
